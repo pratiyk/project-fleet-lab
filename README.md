@@ -1,4 +1,31 @@
 # ProjectFleet Vulnerable Lab
+
+This is a purposely vulnerable DevOps lab simulating a real-world CI/CD dashboard with common misconfigurations and secrets exposure.
+
+## Scenario
+A startup's DevOps team builds "ProjectFleet" to track CI/CD pipelines. In a late-night push, the lead engineer clones their AWS creds into `/app/static/docs/` for "quick testing," commits to a Git repo served publicly, and deploys without review. Exposed metadata leads to instance role abuse, and a cron job runs as sudo due to hasty scripting.
+
+## Attack Chain
+1. **Recon:** Nmap reveals ports 80 (Nginx), 22 (SSH). Gobuster finds `/static/docs/` with a `.git` directory.
+2. **Initial Foothold:** Download Git objects via git-dumper; extract AWS access key from commit history. Key has IAM role for EC2 metadata read.
+3. **Privilege Ramp:** Use creds for SSRF to `169.254.169.254/latest/meta-data/iam/security-credentials/`; steal temp creds with S3 read/write on sensitive buckets.
+4. **User Shell:** Temp creds access S3 bucket with uploaded SSH private key; SSH as devops user.
+5. **Root Privesc:** devops can sudo `/usr/bin/systemctl restart fleet-monitor` without password (misconfig for "easy restarts"). Exploit via custom service file edit for reverse shell.
+
+## Services
+- Flask app (dashboard, SSRF endpoint)
+- Mock EC2 metadata server (port 8000)
+- Mock S3 server (port 9000)
+- Nginx reverse proxy (port 80)
+- SSH (port 22)
+
+## Usage
+- Deploy or reset the VM. The `startup.sh` script will auto-provision everything.
+- Visit the web dashboard at `http://<vm-ip>/`.
+- Begin enumeration and exploitation as described above.
+
+**For educational use only!**
+# ProjectFleet Vulnerable Lab
 ## Automated GCP VM Setup
 
 To automate the setup of this lab on a GCP VM:
