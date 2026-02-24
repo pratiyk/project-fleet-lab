@@ -1,0 +1,9 @@
+[Unit]
+Description=Fleet Monitor Service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /app/fleet_monitor.py
+
+[Install]
+WantedBy=multi-user.target

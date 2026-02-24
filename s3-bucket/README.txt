@@ -1,0 +1,1 @@
+This folder simulates an S3 bucket. The SSH private key for the devops user will be placed here by the attacker.

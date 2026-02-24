@@ -1,0 +1,1 @@
+This directory simulates a public docs folder with a .git repo. The .git history will leak AWS credentials.

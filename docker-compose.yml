@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "80:80"
+      - "2222:22"
+    volumes:
+      - ./static:/static
+      - ./s3-bucket:/s3-bucket
+      - ./ssh:/ssh
+      - ./systemd:/etc/systemd/system
+    privileged: true
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIAEXAMPLE
+      - AWS_SECRET_ACCESS_KEY=SECRETEXAMPLE
+      - AWS_DEFAULT_REGION=us-east-1
