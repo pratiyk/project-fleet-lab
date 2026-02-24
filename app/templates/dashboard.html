@@ -5,21 +5,76 @@
     <title>ProjectFleet CI/CD Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body class="bg-dark text-white">
+    <nav class="navbar navbar-dark bg-primary shadow">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">ProjectFleet 🚀</span>
+            <div class="d-flex">
+                <span class="text-light me-3">Logged in as: <strong>devops_lead</strong></span>
+            </div>
+        </div>
+    </nav>
+
     <div class="container mt-5">
-        <div class="card shadow">
-            <div class="card-body">
-                <h1 class="card-title text-primary">ProjectFleet CI/CD Dashboard</h1>
-                <p class="card-text">Monitor your fleet, view build status, and manage deployments.</p>
-                <hr>
-                <ul class="list-group">
-                    <li class="list-group-item">Build Status: <span class="badge bg-success">Passing</span></li>
-                    <li class="list-group-item">Last Deployment: <span class="badge bg-info">2026-02-24 14:00 UTC</span></li>
-                    <li class="list-group-item">Fleet Monitor: <span class="badge bg-warning text-dark">Active</span></li>
-                </ul>
-                <div class="mt-4">
-                    <a href="/ssrf" class="btn btn-outline-danger">Test SSRF Endpoint</a>
-                    <a href="/static/docs/README.md" class="btn btn-outline-secondary">View Documentation</a>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card bg-secondary text-white shadow">
+                    <div class="card-body">
+                        <h2 class="card-title">CI/CD Pipeline Monitor</h2>
+                        <p class="text-light">Real-time status of active deployment pipelines.</p>
+                        <table class="table table-dark table-hover mt-3">
+                            <thead>
+                                <tr>
+                                    <th>Pipeline Name</th>
+                                    <th>Status</th>
+                                    <th>Last Run</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in pipelines %}
+                                <tr>
+                                    <td>{{ p.name }}</td>
+                                    <td>
+                                        {% if p.status == 'Success' %}
+                                        <span class="badge bg-success">Success</span>
+                                        {% elif p.status == 'In Progress' %}
+                                        <span class="badge bg-warning text-dark">Running</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ p.last_run }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-secondary text-white shadow mb-4">
+                    <div class="card-body">
+                        <h5>Quick Actions</h5>
+                        <div class="d-grid gap-2">
+                            <a href="/ssrf" class="btn btn-danger">Connectivity Test (SSRF)</a>
+                            <a href="/static/docs/README.md" class="btn btn-info text-white">Internal Documentation</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card bg-secondary text-white shadow">
+                    <div class="card-body">
+                        <h5>System Health</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-secondary text-white d-flex justify-content-between align-items-center">
+                                Fleet Monitor
+                                <span class="badge bg-success rounded-pill">Active</span>
+                            </li>
+                            <li class="list-group-item bg-secondary text-white d-flex justify-content-between align-items-center">
+                                AWS Metadata Link
+                                <span class="badge bg-success rounded-pill">Connected</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>

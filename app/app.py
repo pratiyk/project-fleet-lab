@@ -6,7 +6,13 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return render_template('dashboard.html')
+    pipelines = [
+        {"name": "Fleet-Backend-CI", "status": "Success", "last_run": "2 mins ago"},
+        {"name": "Fleet-Portal-Frontend", "status": "In Progress", "last_run": "Running"},
+        {"name": "Metadata-Service-Prod", "status": "Success", "last_run": "1 hour ago"},
+        {"name": "S3-Bucket-Sync", "status": "Success", "last_run": "3 hours ago"}
+    ]
+    return render_template('dashboard.html', pipelines=pipelines)
 
 @app.route('/ssrf', methods=['GET', 'POST'])
 def ssrf():
