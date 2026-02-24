@@ -1,13 +1,14 @@
 #!/bin/bash
 # Optimized Startup script for Project Fleet Lab on GCP VM
+# Designed for Vulnerability Simulation (Privilege Escalation)
 set -e
 
 # --- 1. System Dependencies ---
 apt-get update
-apt-get install -y python3 python3-pip python3-venv nginx git openssh-server sudo
+apt-get install -y python3 python3-pip python3-venv nginx git openssh-server sudo cron
 
-
-# --- 2. Repository Setup (always overwrite for idempotency) ---
+# --- 2. Repository Setup ---
+# Always wipe and clone fresh to ensure code updates from GitHub are applied on reset
 REPO_URL="https://github.com/pratiyk/project-fleet-lab.git"
 REPO_DIR="/opt/project-fleet-lab"
 
@@ -15,32 +16,34 @@ rm -rf "$REPO_DIR"
 git clone "$REPO_URL" "$REPO_DIR"
 cd "$REPO_DIR"
 
-# --- 3. Python Virtual Environment (Best Practice) ---
-# This avoids the "break-system-packages" error entirely
+# --- 3. Python Virtual Environment ---
+# Handles PEP 668 and keeps the OS Python environment clean
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
-
 
 # --- 4. User & SSH Security ---
 if ! id -u devops >/dev/null 2>&1; then
     useradd -m -s /bin/bash devops
 fi
 
+# Set up SSH directory
 mkdir -p /home/devops/.ssh
 
-# Generate SSH key if missing and commit public key
+# Generate keys if they don't exist in the repo
 if [ ! -f "ssh/id_rsa" ]; then
+    mkdir -p ssh
     ssh-keygen -t rsa -b 2048 -f ssh/id_rsa -N ""
-    git add ssh/id_rsa ssh/id_rsa.pub
-    git commit -m "Add devops SSH key for lab"
 fi
 
+# Deploy keys to the devops user
 cp ssh/id_rsa.pub /home/devops/.ssh/authorized_keys
-chown -R devops:devops /home/devops/.ssh
+cp ssh/id_rsa /home/devops/id_rsa
+chown -R devops:devops /home/devops/
 chmod 700 /home/devops/.ssh
 chmod 600 /home/devops/.ssh/authorized_keys
+chmod 600 /home/devops/id_rsa
 
 # Enforce Key-Based Auth
 sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
@@ -52,19 +55,12 @@ if [ -f "nginx/default.conf" ]; then
     systemctl restart nginx
 fi
 
+# --- 6. Systemd Service Creation ---
 
-# --- 6. Systemd Service Creation (Replaces nohup) ---
-
-# A. Fleet Monitor Service (make writable by devops for privesc)
+# A. Fleet Monitor Service (The VULNERABLE Service)
+# LAB CONFIG: We make the service file WRITABLE by the devops user
 cp systemd/fleet-monitor.service /etc/systemd/system/
 chown devops:devops /etc/systemd/system/fleet-monitor.service
-# --- 7. Sudoers Misconfig for devops ---
-echo "devops ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart fleet-monitor" > /etc/sudoers.d/devops-lab
-chmod 440 /etc/sudoers.d/devops-lab
-
-# --- 8. Cron Job for Fleet Monitor (runs as sudo) ---
-(crontab -l -u devops 2>/dev/null; echo "* * * * * sudo systemctl restart fleet-monitor") | crontab -u devops -
-
 
 # B. Flask App Service
 cat <<EOF > /etc/systemd/system/fleet-app.service
@@ -105,9 +101,19 @@ StandardError=append:/var/log/projectfleet-metadata.log
 WantedBy=multi-user.target
 EOF
 
+# --- 7. Sudoers Misconfig (PrivEsc Path #1) ---
+# LAB CONFIG: Allows devops to restart the monitor service as root without a password
+echo "devops ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart fleet-monitor" > /etc/sudoers.d/devops-lab
+chmod 440 /etc/sudoers.d/devops-lab
+
+# --- 8. Cron Job for Fleet Monitor (Exploit Automation) ---
+# LAB CONFIG: Restarts the service every minute to trigger the student's payload
+echo "* * * * * root systemctl restart fleet-monitor" > /etc/cron.d/fleet-lab-cron
+chmod 644 /etc/cron.d/fleet-lab-cron
+
 # --- 9. Start Services ---
 systemctl daemon-reload
 systemctl enable fleet-monitor.service fleet-app.service fleet-metadata.service
 systemctl restart fleet-monitor.service fleet-app.service fleet-metadata.service
 
-echo "Project Fleet Lab setup complete and services managed by systemd."
+echo "Project Fleet Lab setup complete. Happy Hunting!"
