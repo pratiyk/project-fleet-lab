@@ -10,8 +10,8 @@ def creds():
 @mock_metadata.route('/latest/meta-data/iam/security-credentials/projectfleet-role')
 def role():
     return jsonify({
-        "AccessKeyId": os.environ.get('AWS_ACCESS_KEY_ID', 'AKIAEXAMPLE'),
-        "SecretAccessKey": os.environ.get('AWS_SECRET_ACCESS_KEY', 'SECRETEXAMPLE'),
+        "AccessKeyId": "AKIA5UBC_TEMP_789",
+        "SecretAccessKey": "t3mp_s3cr3t_vlu3_xyz123",
         "Token": "FAKETOKEN",
         "Expiration": "2026-12-31T23:59:59Z"
     })
